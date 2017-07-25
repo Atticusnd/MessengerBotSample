@@ -45,19 +45,16 @@ app.get('/webhook',function(req,res){
   }  
 });
 
-
+//Creamos el POST de webhook donde obtendremos el mensaje
 app.post('/webhook', function (req, res) {
   var data = req.body;
 
-  // Make sure this is a page subscription
   if (data.object == 'page') {
-    // Iterate over each entry
-    // There may be multiple if batched
     data.entry.forEach(function(pageEntry) {
       var pageID = pageEntry.id;
       var timeOfEvent = pageEntry.time;
       
-      // Iterate over each messaging event
+      // Iterar sobre cada mensaje
       pageEntry.messaging.forEach(function(messagingEvent) {
         if (messagingEvent.optin) {
           receivedAuthentication(messagingEvent);
@@ -72,27 +69,22 @@ app.post('/webhook', function (req, res) {
         } else if (messagingEvent.account_linking) {
           receivedAccountLink(messagingEvent);
         } else {
-          console.log("Webhook received unknown messagingEvent: ", messagingEvent);
+          console.log("No se reconoce el evento ", messagingEvent);
         }
       });
     });
-
-    // Assume all went well.
-    //
-    // You must send back a 200, within 20 seconds, to let us know you've 
-    // successfully received the callback. Otherwise, the request will time out.
     res.sendStatus(200);
   }
 });
 
-
+// Recibir un mensaje
 function receivedMessage(event) {
   var senderID = event.sender.id;
   var recipientID = event.recipient.id;
   var timeOfMessage = event.timestamp;
   var message = event.message;
 
-  console.log("Received message for user %d and page %d at %d with message:", 
+  console.log("Recibiste un mensaje del usuario %d de la página %d el %d con el mensaje:", 
     senderID, recipientID, timeOfMessage);
   console.log(JSON.stringify(message));
 
@@ -122,9 +114,7 @@ function receivedMessage(event) {
 
   if (messageText) {
 
-    // If we receive a text message, check to see if it matches any special
-    // keywords and send back the corresponding example. Otherwise, just echo
-    // the text we received.
+    // Si recibimos un mensaje validamos si incluye una palabra clave que pueda ser
     switch (messageText) {
       case 'quick reply':
         sendQuickReply(senderID);
@@ -181,15 +171,8 @@ function receivedMessage(event) {
 
   if (messageText) {
 
-    // If we receive a text message, check to see if it matches any special
-    // keywords and send back the corresponding example. Otherwise, just echo
-    // the text we received.
+    //Respondemos en caso de encontrar una palabra clave
     switch (messageText) {
-
-      case 'button':
-        sendButtonMessage(senderID);
-        break;
-
       case 'generic':
         sendGenericMessage(senderID);
         break;
@@ -203,12 +186,12 @@ function receivedMessage(event) {
         sendTextMessage(senderID, messageText);
     }
   } else if (messageAttachments) {
-    sendTextMessage(senderID, "Message with attachment received");
+    sendTextMessage(senderID, "Mmensaje con ");
   }
 }
 
 
-
+//Mandar Texto
 function sendTextMessage(recipientId, messageText) {
   var messageData = {
     recipient: {
@@ -224,10 +207,7 @@ function sendTextMessage(recipientId, messageText) {
 }
 
 
-/*
- * Send a message with Quick Reply buttons.
- *
- */
+//Enviar quick replies
 function sendQuickReply(recipientId) {
   var messageData = {
     recipient: {
@@ -260,11 +240,7 @@ function sendQuickReply(recipientId) {
 
 
 
-/*
- * Call the Send API. The message data goes in the body. If successful, we'll 
- * get the message id in a response 
- *
- */
+//Llamadas a Graph API
 function callSendAPI(messageData) {
   request({
     uri: 'https://graph.facebook.com/v2.6/me/messages',
@@ -294,8 +270,7 @@ function receivedPostback(event) {
   var recipientID = event.recipient.id;
   var timeOfPostback = event.timestamp;
 
-  // The 'payload' param is a developer-defined field which is set in a postback 
-  // button for Structured Messages. 
+ //A partir del playload respondemos
   var payload = event.postback.payload;
   switch (payload){
        case 'hello':
@@ -338,9 +313,9 @@ function trackEvent(senderID,eventName){
         page_scoped_user_id: senderID
     }
     }, function(err,httpResponse,body){ 
-    console.error(err);
-    console.log(httpResponse.statusCode);
-    console.log(body);
+    console.error("Error: "+err);
+    console.log("Status Code: "+httpResponse.statusCode);
+    console.log("Body "+body);
     });
 }
 //Start app
